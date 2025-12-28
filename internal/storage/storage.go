@@ -8,7 +8,10 @@ type Storage interface {
 	DeleteShortcut(name string) error
 	
 	// Tag operations
-	AddTag(shortcutName string, tags []string) error
+	AddTags(shortcutName string, tags []string) error
+	RemoveTags(shortcutName string, tags []string) error
+	GetShortcutTags(shortcutName string) ([]string, error)
+	SearchShortcuts(query string, tags []string) ([]Shortcut, error)
 	
 	// Close the database
 	Close() error

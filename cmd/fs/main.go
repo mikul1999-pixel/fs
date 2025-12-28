@@ -98,7 +98,11 @@ var listCmd = &cobra.Command{
 
 		fmt.Println("Shortcuts:")
 		for _, sc := range shortcuts {
-			fmt.Printf("  %s -> %s\n", sc.Name, sc.Path)
+			tagStr := ""
+			if len(sc.Tags) > 0 {
+				tagStr = fmt.Sprintf(" [%s]", strings.Join(sc.Tags, ", "))
+			}
+			fmt.Printf("  %s -> %s%s\n", sc.Name, sc.Path, tagStr)
 		}
 	},
 }
@@ -154,6 +158,7 @@ func expandPath(path string) (string, error) {
 
 var peekCmd = &cobra.Command{
 	Use:   "peek <name>",
+	Aliases: []string{"ls"},
 	Short: "Preview the contents of a shortcut location",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -179,13 +184,86 @@ var peekCmd = &cobra.Command{
 	},
 }
 
+var tagCmd = &cobra.Command{
+	Use:   "tag <shortcut> <tags...>",
+	Short: "Add tags to a shortcut",
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		shortcutName := args[0]
+		tags := args[1:]
+
+		if err := store.AddTags(shortcutName, tags); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Added tags to %s: %s\n", shortcutName, strings.Join(tags, ", "))
+	},
+}
+
+var untagCmd = &cobra.Command{
+	Use:   "untag <shortcut> <tags...>",
+	Short: "Remove tags from a shortcut",
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		shortcutName := args[0]
+		tags := args[1:]
+
+		if err := store.RemoveTags(shortcutName, tags); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Removed tags from %s: %s\n", shortcutName, strings.Join(tags, ", "))
+	},
+}
+
+var searchCmd = &cobra.Command{
+	Use:   "search [query]",
+	Aliases: []string{"find"},
+	Short: "Search shortcuts by name, path, or tags",
+	Run: func(cmd *cobra.Command, args []string) {
+		query := ""
+		if len(args) > 0 {
+			query = args[0]
+		}
+
+		tags, _ := cmd.Flags().GetStringSlice("tag")
+
+		shortcuts, err := store.SearchShortcuts(query, tags)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		if len(shortcuts) == 0 {
+			fmt.Println("No shortcuts found.")
+			return
+		}
+
+		fmt.Println("Shortcuts:")
+		for _, sc := range shortcuts {
+			tagStr := ""
+			if len(sc.Tags) > 0 {
+				tagStr = fmt.Sprintf(" [%s]", strings.Join(sc.Tags, ", "))
+			}
+			fmt.Printf("  %s -> %s%s\n", sc.Name, sc.Path, tagStr)
+		}
+	},
+}
+
 func init() {
+	searchCmd.Flags().StringSliceP("tag", "t", []string{}, "Filter by tags") // Add flags to search before adding it to root
+
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(deleteCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(goCmd)
 	rootCmd.AddCommand(peekCmd)
+	rootCmd.AddCommand(tagCmd)
+	rootCmd.AddCommand(untagCmd)
+	rootCmd.AddCommand(searchCmd)
 }
 
 func main() {
