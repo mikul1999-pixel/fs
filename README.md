@@ -50,10 +50,10 @@ fs init
 This will show you the shell function to add to your shell config. Add it to `~/.bashrc` or `~/.zshrc`:
 ```bash
 # sh function
-fsg() { cd "$(fs go "$1")"; }
+f() { cd "$(fs go "$1")"; }
 
 # cmd to add it to ~/.bashrc
-echo 'fsg() { cd "$(fs go "$1")"; }' >> ~/.bashrc
+echo 'f() { cd "$(fs go "$1")"; }' >> ~/.bashrc
 ```
 
 Then reload your shell:
@@ -74,7 +74,7 @@ fs add /var/log/nginx nginx-logs
 fs list
 
 # Jump to a shortcut
-fsg homelab           # Using the shell function
+f homelab             # Using the shell function
 cd $(fs go homelab)   # Alternative syntax
 
 # Remove a shortcut
