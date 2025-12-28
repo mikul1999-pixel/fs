@@ -1,1 +1,15 @@
+# binaries
+*.exe
+*.exe~
 /fs
+
+# build
+*.test
+*.out
+/bin/
+/build/
+/dist/
+
+# workspace files
+go.work
+go.work.sum
