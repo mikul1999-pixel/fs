@@ -71,6 +71,10 @@ fs add <path> <shortcut>
 # List all shortcuts
 fs list
 
+# Edit a shortcut
+fs edit-path <shortcut> <new-path>
+fs edit-name <shortcut> <new-name>
+
 # Remove a shortcut
 fs rm <shortcut>
 
@@ -88,9 +92,9 @@ fs untag <shortcut> <tag1> <tag2> ...
 f <shortcut>
 
 # Search and jump
-ff <partial.shortcut>
+ff <like:shortcut-or-path>
+ff <like:shortcut-or-path> --tag <tag1> <tag2> ...
 ff --tag <tag1> <tag2> ...
-ff <partial.shortcut> --tag <tag1> <tag2> ...
 ```
 
 ## Appendix

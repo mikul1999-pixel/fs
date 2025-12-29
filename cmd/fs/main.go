@@ -123,6 +123,75 @@ var deleteCmd = &cobra.Command{
 	},
 }
 
+var editPathCmd = &cobra.Command{
+	Use:   "edit-path <name> <new-path>",
+	Short: "Update the path of an existing shortcut (preserves tags)",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+		newPath := args[1]
+
+		// Expand path (handle ~ and relative paths)
+		absPath, err := expandPath(newPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: invalid path: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Validate path exists
+		if _, err := os.Stat(absPath); os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "Error: path does not exist: %s\n", absPath)
+			os.Exit(1)
+		}
+
+		// Update in database
+		if err := store.UpdateShortcutPath(name, absPath); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Updated shortcut '%s' to point to: %s\n", name, absPath)
+		
+		// Show current
+		tags, err := store.GetShortcutTags(name)
+		if err == nil && len(tags) > 0 {
+			fmt.Printf("  Tags preserved: %s\n", strings.Join(tags, ", "))
+		}
+	},
+}
+
+var editNameCmd = &cobra.Command{
+	Use:   "edit-name <old-name> <new-name>",
+	Short: "Rename an existing shortcut (preserves path and tags)",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		oldName := args[0]
+		newName := args[1]
+
+		// Get current shortcut
+		sc, err := store.GetShortcut(oldName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Update name in database
+		if err := store.UpdateShortcutName(oldName, newName); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Renamed shortcut '%s' to '%s'\n", oldName, newName)
+		fmt.Printf("  Path: %s\n", sc.Path)
+		
+		// Show current tags
+		tags, err := store.GetShortcutTags(newName)
+		if err == nil && len(tags) > 0 {
+			fmt.Printf("  Tags: %s\n", strings.Join(tags, ", "))
+		}
+	},
+}
+
 var goCmd = &cobra.Command{
 	Use:   "go <name>",
 	Short: "Get path for a shortcut",
@@ -264,6 +333,8 @@ func init() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(deleteCmd)
+	rootCmd.AddCommand(editPathCmd)
+	rootCmd.AddCommand(editNameCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(goCmd)
 	rootCmd.AddCommand(peekCmd)

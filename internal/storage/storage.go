@@ -6,6 +6,8 @@ type Storage interface {
 	GetShortcut(name string) (*Shortcut, error)
 	ListShortcuts() ([]Shortcut, error)
 	DeleteShortcut(name string) error
+	UpdateShortcutPath(name, newPath string) error 
+	UpdateShortcutName(oldName, newName string) error 
 	
 	// Tag operations
 	AddTags(shortcutName string, tags []string) error

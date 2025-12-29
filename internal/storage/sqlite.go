@@ -139,6 +139,57 @@ func (s *SQLiteStorage) DeleteShortcut(name string) error {
 	return nil
 }
 
+func (s *SQLiteStorage) UpdateShortcutPath(name, newPath string) error {
+	result, err := s.db.Exec(
+		"UPDATE shortcuts SET path = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?",
+		newPath, name,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update shortcut path: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("shortcut '%s' not found", name)
+	}
+
+	return nil
+}
+
+func (s *SQLiteStorage) UpdateShortcutName(oldName, newName string) error {
+	// Check if new name already exists
+	var exists int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM shortcuts WHERE name = ?", newName).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check for existing shortcut: %w", err)
+	}
+	if exists > 0 {
+		return fmt.Errorf("shortcut '%s' already exists", newName)
+	}
+
+	// Update the name
+	result, err := s.db.Exec(
+		"UPDATE shortcuts SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?",
+		newName, oldName,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update shortcut name: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("shortcut '%s' not found", oldName)
+	}
+
+	return nil
+}
+
 func (s *SQLiteStorage) AddTags(shortcutName string, tags []string) error {
 	// Get shortcut ID
 	var shortcutID int
