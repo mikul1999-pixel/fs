@@ -104,6 +104,10 @@ ff --tag <tag1> <tag2> ...
 
 ## Appendix
 
+**Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `zoxide` and `autojump`. Built using `Cobra` and `Bubbletea`
+
+<br>
+
 ### Project Structure
 ```
 fs/
@@ -138,4 +142,3 @@ rm -rf ~/.config/fs/
 
 ---
 
-**Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `z`, `autojump`, and `ranger`. And built using `Cobra (CLI framework)` and `Bubbletea (TUI)`
