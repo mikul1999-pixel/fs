@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/mikul1999-pixel/fs/internal/storage"
+	"github.com/mikul1999-pixel/fs/internal/ui"
 	"github.com/mikul1999-pixel/fs/pkg/config"
 )
 
@@ -25,20 +26,18 @@ var initCmd = &cobra.Command{
 	Short: "Show setup instructions for shell integration",
 	Run: func(cmd *cobra.Command, args []string) {
 		shell := detectShell()
-		fmt.Printf("To enable quick directory switching, run this command:\n\n")
-		
-		if shell == ".bashrc" || shell == ".zshrc" {
-			fmt.Printf("    echo 'f() { cd \"$(fs go \"$1\")\"; }' >> ~/%s\n", shell)
-		} else {
-			fmt.Printf("    echo 'function f; cd (fs go $argv[1]); end' >> ~/%s\n", shell)
-		}
-		
-		fmt.Printf("\nThen reload your shell:\n\n")
-		fmt.Printf("    source ~/%s\n", shell)
-		fmt.Println("\nAfter that, you can use: f <shortcut-name>")
-		fmt.Println("\nExample:")
-		fmt.Println("  fs add ~/projects/homelab homelab")
-		fmt.Println("  f homelab")
+		fmt.Println("Add these these functions to your ~/" + shell + ":\n")
+		fmt.Println("# Quick jump to shortcut")
+		fmt.Println("f() { cd \"$(fs go \"$1\")\"; }\n")
+		fmt.Println("# Interactive find and jump")
+		fmt.Println("ff() { local path=$(fs find \"$@\" </dev/tty); [ $? -eq 0 ] && [ -n \"$path\" ] && cd \"$path\"; }\n")
+
+		fmt.Println("Or run these commands:")
+		fmt.Printf("    echo '# enable fs interactive find and jump' >> ~/%s\n", shell)
+		fmt.Printf("    echo 'f() { cd \"$(fs go \"$1\")\"; }' >> ~/%s\n", shell)
+		fmt.Printf("    echo 'ff() { local path=$(fs find \"$@\" </dev/tty); [ $? -eq 0 ] && [ -n \"$path\" ] && cd \"$path\"; }' >> ~/%s\n", shell)
+		fmt.Printf("\nThen reload your shell:\n")
+		fmt.Printf("    source ~/%s\n", shell + "\n")
 	},
 }
 
@@ -137,7 +136,8 @@ var goCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Print the path. Use with cd $(fs go <name>)
+		// Print the path
+		// called by f(). print path --> jump with cd
 		fmt.Println(sc.Path)
 	},
 }
@@ -218,10 +218,9 @@ var untagCmd = &cobra.Command{
 	},
 }
 
-var searchCmd = &cobra.Command{
-	Use:   "search [query]",
-	Aliases: []string{"find"},
-	Short: "Search shortcuts by name, path, or tags",
+var findCmd = &cobra.Command{
+	Use:     "find [query]",
+	Short:   "Interactively search and select shortcuts",
 	Run: func(cmd *cobra.Command, args []string) {
 		query := ""
 		if len(args) > 0 {
@@ -238,22 +237,29 @@ var searchCmd = &cobra.Command{
 
 		if len(shortcuts) == 0 {
 			fmt.Println("No shortcuts found.")
+			os.Exit(1)
+		}
+
+		// If only one result, just print path
+		if len(shortcuts) == 1 {
+			fmt.Println(shortcuts[0].Path)
 			return
 		}
 
-		fmt.Println("Shortcuts:")
-		for _, sc := range shortcuts {
-			tagStr := ""
-			if len(sc.Tags) > 0 {
-				tagStr = fmt.Sprintf(" [%s]", strings.Join(sc.Tags, ", "))
-			}
-			fmt.Printf("  %s -> %s%s\n", sc.Name, sc.Path, tagStr)
+		// Run interactive selector
+		selectedPath, err := ui.RunSelector(shortcuts)
+		if err != nil {
+			os.Exit(1)
 		}
+
+		// print selected path
+		// called by ff(). print path --> jump with cd
+		fmt.Println(selectedPath)
 	},
 }
 
 func init() {
-	searchCmd.Flags().StringSliceP("tag", "t", []string{}, "Filter by tags") // Add flags to search before adding it to root
+	findCmd.Flags().StringSliceP("tag", "t", []string{}, "Filter by tags") // Add flags to search before adding it to root
 
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(listCmd)
@@ -263,7 +269,7 @@ func init() {
 	rootCmd.AddCommand(peekCmd)
 	rootCmd.AddCommand(tagCmd)
 	rootCmd.AddCommand(untagCmd)
-	rootCmd.AddCommand(searchCmd)
+	rootCmd.AddCommand(findCmd)
 }
 
 func main() {

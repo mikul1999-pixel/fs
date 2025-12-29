@@ -8,11 +8,13 @@ A lightweight CLI tool for managing filesystem shortcuts, tags, and quick naviga
 - **Tags**: Organize shortcuts by project, category, or context
 - **Search**: Find shortcuts by name, path, or tags
 - **Quick Navigation**: Jump to any saved location instantly
+- **Peek**: Preview directory contents before jumping
 - **Local Storage**: SQLite database stored in `~/.config/fs/`
 
 
 ## Requirements
 - Go 1.21 or higher
+- Bash or Zsh shell
 
 ## Installation
 
@@ -47,19 +49,16 @@ After installation, run the init command to set up quick navigation:
 fs init
 ```
 
-This will show you the shell function to add to your shell config. Add it to `~/.bashrc` or `~/.zshrc`:
+This will show you the shell functions to add to your shell config. Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
-# sh function
-f() { cd "$(fs go "$1")"; }
-
-# cmd to add it to ~/.bashrc
+# Add functions to your shell config
 echo 'f() { cd "$(fs go "$1")"; }' >> ~/.bashrc
-```
+echo 'ff() { local path=$(fs find "$@" </dev/tty); [ $? -eq 0 ] && [ -n "$path" ] && cd "$path"; }' >> ~/.bashrc
 
-Then reload your shell:
-```bash
-source ~/.bashrc  # or source ~/.zshrc
+# Reload your shell
+source ~/.bashrc
 ```
+For zsh, replace `.bashrc` with `.zshrc`.
 
 ## Usage
 
@@ -67,30 +66,31 @@ source ~/.bashrc  # or source ~/.zshrc
 
 ```bash
 # Add a shortcut
-fs add ~/projects/homelab homelab
-fs add /var/log/nginx nginx-logs
+fs add <path> <shortcut>
 
 # List all shortcuts
 fs list
 
-# Jump to a shortcut
-f homelab             # Using the shell function
-cd $(fs go homelab)   # Alternative syntax
-
 # Remove a shortcut
-fs rm homelab
+fs rm <shortcut>
 
-# Tag shortcuts
-fs tag homelab work docker
-fs tag nginx-logs work debugging
+# Preview directory contents
+fs peek <shortcut>
 
-# Search shortcuts
-fs search docker
-fs search --tag work
+# Add tags to a shortcut
+fs tag <shortcut> <tag1> <tag2> ...
 
-# Find files in shortcuts
-fs find "docker-compose.yml"
-fs find "*.log" --shortcut nginx-logs
+# Delete a tag
+fs untag <shortcut>
+fs untag <shortcut> <tag1> <tag2> ...
+
+# Jump to a shortcut
+f <shortcut>
+
+# Search and jump
+ff <partial.shortcut>
+ff --tag <tag1> <tag2> ...
+ff <partial.shortcut> --tag <tag1> <tag2> ...
 ```
 
 ## Appendix
@@ -98,11 +98,10 @@ fs find "*.log" --shortcut nginx-logs
 ### Project Structure
 ```
 fs/
-├── cmd/fs/           # Main entry point
+├── cmd/fs/           # Main CLI application
 ├── internal/
-│   ├── storage/      # SQLite Database layer
-│   ├── shortcut/     # Business logic
-│   └── fileops/      # File operations
+│   ├── storage/      # SQLite Database layer    
+│   └── ui/           # Bubbletea TUI components
 ├── pkg/config/       # Config
 └── Makefile          # Build automation
 ```
@@ -130,4 +129,4 @@ rm -rf ~/.config/fs/
 
 ---
 
-**Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `z`, `autojump`, and `ranger`.
+**Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `z`, `autojump`, and `ranger`. And built using `Cobra (CLI framework)` and `Bubbletea (TUI)`
