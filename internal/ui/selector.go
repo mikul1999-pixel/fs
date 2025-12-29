@@ -45,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 
-		case "enter":
+		case "enter", " ":
 			m.selected = &m.shortcuts[m.cursor]
 			m.quitting = true
 			return m, tea.Quit
@@ -62,7 +62,7 @@ func (m model) View() string {
 
 	var s strings.Builder
 
-	s.WriteString("Select a shortcut (↑/↓ or j/k to move, Enter to select, q to quit):\n\n")
+	s.WriteString("Select a shortcut (up/down or j/k to move, Enter to select, q to quit):\n\n")
 
 	for i, shortcut := range m.shortcuts {
 		cursor := " "
