@@ -41,6 +41,9 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 
 Add that line to your `~/.bashrc` or `~/.zshrc` to make it permanent.
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+```
 
 ### Initialize commands
 
