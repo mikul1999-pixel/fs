@@ -22,31 +22,51 @@ var rootCmd = &cobra.Command{
 }
 
 var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Show setup instructions for shell integration",
-	Run: func(cmd *cobra.Command, args []string) {
-		shell := detectShell()
-		fmt.Println("Add these these functions to your ~/" + shell + ":\n")
-		fmt.Println("# Quick jump to shortcut")
-		fmt.Println("f() { cd \"$(fs go \"$1\")\"; }\n")
-		fmt.Println("# Interactive find and jump")
-		fmt.Println("ff() { local path=$(fs find \"$@\" </dev/tty); [ $? -eq 0 ] && [ -n \"$path\" ] && cd \"$path\"; }\n")
+    Use:   "init",
+    Short: "Setup functions for shell integration",
+    Run: func(cmd *cobra.Command, args []string) {
+        fmt.Print(`
+# fs shell integration
 
-		fmt.Println("Or run these commands:")
-		fmt.Printf("    echo '# enable fs interactive find and jump' >> ~/%s\n", shell)
-		fmt.Printf("    echo 'f() { cd \"$(fs go \"$1\")\"; }' >> ~/%s\n", shell)
-		fmt.Printf("    echo 'ff() { local path=$(fs find \"$@\" </dev/tty); [ $? -eq 0 ] && [ -n \"$path\" ] && cd \"$path\"; }' >> ~/%s\n", shell)
-		fmt.Printf("\nThen reload your shell:\n")
-		fmt.Printf("    source ~/%s\n", shell + "\n")
-	},
+f() {
+    cd "$(fs go "$1")"
+}
+
+ff() {
+    local path
+    path=$(fs find "$@" </dev/tty)
+    [ $? -eq 0 ] && [ -n "$path" ] && cd "$path"
+}
+`)
+    },
 }
 
 func detectShell() string {
+	// dummy function to leave option open: detect shell & output different init?
     shell := os.Getenv("SHELL")
     if strings.Contains(shell, "zsh") {
         return ".zshrc"
     }
     return ".bashrc"
+}
+
+var goCmd = &cobra.Command{
+	Use:   "go <name>",
+	Short: "Get path for a shortcut",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		name := args[0]
+
+		sc, err := store.GetShortcut(name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Print the path
+		// called by f(). print path --> jump with cd
+		fmt.Println(sc.Path)
+	},
 }
 
 var addCmd = &cobra.Command{
@@ -189,25 +209,6 @@ var editNameCmd = &cobra.Command{
 		if err == nil && len(tags) > 0 {
 			fmt.Printf("  Tags: %s\n", strings.Join(tags, ", "))
 		}
-	},
-}
-
-var goCmd = &cobra.Command{
-	Use:   "go <name>",
-	Short: "Get path for a shortcut",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		name := args[0]
-
-		sc, err := store.GetShortcut(name)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
-
-		// Print the path
-		// called by f(). print path --> jump with cd
-		fmt.Println(sc.Path)
 	},
 }
 

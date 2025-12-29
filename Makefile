@@ -18,14 +18,24 @@ install: build ## Build and install to ~/.local/bin
 	@echo ""
 	@echo "fs installed to $(INSTALL_PATH)/$(BINARY_NAME)"
 	@echo ""
+
 	@echo "Make sure $(INSTALL_PATH) is in your PATH."
 	@echo "If not, add this to your ~/.bashrc or ~/.zshrc:"
 	@echo "    export PATH=\"\$$HOME/.local/bin:\$$PATH\""
 	@echo ""
-	@echo "Next steps:"
-	@echo "  1. Run: source ~/.bashrc  (or restart your terminal)"
-	@echo "  2. Run: fs init           (to set up the shell function)"
-	@echo "  3. Try: fs add ~/projects/myproject proj"
+
+	@echo "Shell integration:"
+	@echo "  Option A: Add this line to your shell config:"
+	@echo '      eval "$$(fs init)"'
+	@echo ""
+	@echo "  Option B: Run cmd to add it:"
+	@echo '      echo '\''eval "$$(fs init)"'\'' >> ~/.bashrc'
+	@echo "      # or ~/.zshrc depending on your shell"
+	@echo ""
+
+
+	@echo "After that, reload your shell:"
+	@echo "    source ~/.bashrc"
 	@echo ""
 
 uninstall: ## Remove the installed binary

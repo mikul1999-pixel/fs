@@ -54,9 +54,11 @@ fs init
 
 This will show you the shell functions to add to your shell config. Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
-# Add functions to your shell config
-echo 'f() { cd "$(fs go "$1")"; }' >> ~/.bashrc
-echo 'ff() { local path=$(fs find "$@" </dev/tty); [ $? -eq 0 ] && [ -n "$path" ] && cd "$path"; }' >> ~/.bashrc
+# Add function to your shell config
+eval "$(fs init)"
+
+# Or run a cmd to add it
+echo 'eval "$(fs init)"' >> ~/.bashrc
 
 # Reload your shell
 source ~/.bashrc
