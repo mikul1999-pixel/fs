@@ -47,12 +47,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 ### Initialize commands
 
-After installation, run the init command to set up quick navigation:
-```bash
-fs init
-```
-
-This will show you the shell functions to add to your shell config. Add to `~/.bashrc` or `~/.zshrc`:
+After installation, add the init command to your shell config. Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
 # Add function to your shell config
 eval "$(fs init)"
