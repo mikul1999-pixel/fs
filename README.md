@@ -2,6 +2,8 @@
 
 A lightweight CLI tool for managing filesystem shortcuts, tags, and quick navigation.
 
+**Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `zoxide` and `autojump`
+
 ## Features
 
 - **Shortcuts**: Save frequently-used paths with memorable names
@@ -113,7 +115,7 @@ ff --tag go   # Show all Go repos
 
 ## Appendix
 
-**Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `zoxide` and `autojump`. Built using `Cobra` and `Bubbletea`
+**Note:** This is a personal project. Features and functionality may change.
 
 <br>
 
