@@ -6,17 +6,11 @@ A lightweight CLI tool for managing filesystem shortcuts, tags, and quick naviga
 
 ## Features
 
-- **Shortcuts**: Save frequently-used paths with memorable names
+- **Shortcuts**: Save frequently-used paths with memorable names. Then jump with ```f <shortcut>```
 - **Tags**: Organize shortcuts by project, category, or context
 - **Search**: Find shortcuts by name, path, or tags
-- **Quick Navigation**: Jump to any saved location instantly
 - **Peek**: Preview directory contents before jumping
 - **Local Storage**: SQLite database stored in `~/.config/fs/`
-
-
-## Requirements
-- Go 1.21 or higher
-- Bash or Zsh shell
 
 ## Installation
 
