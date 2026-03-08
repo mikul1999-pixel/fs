@@ -50,7 +50,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 After installation, add the init command to your shell config. Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
 # Add function to your shell config
-eval "$(fs init)"
+eval "$(fs init)" 
 
 # Or run a cmd to add it
 echo 'eval "$(fs init)"' >> ~/.bashrc
@@ -58,15 +58,21 @@ echo 'eval "$(fs init)"' >> ~/.bashrc
 # Reload your shell
 source ~/.bashrc
 ```
-For zsh, replace `.bashrc` with `.zshrc`.
+For zsh, replace `.bashrc` with `.zshrc`. <br> <br>
+This inititalizes cd shortcuts `f()` and `ff()` *(see CLI usage below)*. Or you can create your own aliases
+```bash
+# customize function names:
+eval "$(fs init go)"           # creates go() and ff()
+eval "$(fs init go search)"    # creates go() and search()
+```
 
 ## Usage
 
 ### CLI Commands
 
 ```bash
-# Add a shortcut
-fs add <path> <shortcut>
+# Add a shortcut (path defaults to cwd)
+fs add <shortcut> <path>
 
 # List all shortcuts
 fs list
@@ -95,6 +101,14 @@ f <shortcut>
 ff <like:shortcut-or-path>
 ff <like:shortcut-or-path> --tag <tag1> <tag2> ...
 ff --tag <tag1> <tag2> ...
+
+
+# Example workflow
+fs add cli
+fs tag cli proj
+fs tag cli go
+ff --tag proj # Show all personal projects
+ff --tag go   # Show all Go repos
 ```
 
 ## Appendix

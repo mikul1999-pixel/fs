@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/mikul1999-pixel/fs/internal/storage"
 	"github.com/mikul1999-pixel/fs/internal/ui"
 	"github.com/mikul1999-pixel/fs/pkg/config"
+	"github.com/spf13/cobra"
 )
 
 var store storage.Storage
@@ -22,33 +22,44 @@ var rootCmd = &cobra.Command{
 }
 
 var initCmd = &cobra.Command{
-    Use:   "init",
-    Short: "Setup functions for shell integration",
-    Run: func(cmd *cobra.Command, args []string) {
-        fmt.Print(`
+	Use:   "init [jump-name] [find-name]",
+	Short: "Setup functions for shell integration",
+	Args:  cobra.RangeArgs(0, 2),
+	Run: func(cmd *cobra.Command, args []string) {
+		jumpFn := "f"
+		findFn := "ff"
+
+		if len(args) >= 1 && args[0] != "" {
+			jumpFn = args[0]
+		}
+		if len(args) >= 2 && args[1] != "" {
+			findFn = args[1]
+		}
+
+		fmt.Printf(`
 # fs shell integration
 
-f() {
+%s() {
     cd "$(fs go "$1")"
 }
 
-ff() {
+%s() {
     local path
     path=$(fs find "$@" </dev/tty)
     [ $? -eq 0 ] && [ -n "$path" ] && cd "$path"
 }
-`)
-    },
+`, jumpFn, findFn)
+	},
 }
 
-func detectShell() string {
-	// dummy function to leave option open: detect shell & output different init?
-    shell := os.Getenv("SHELL")
-    if strings.Contains(shell, "zsh") {
-        return ".zshrc"
-    }
-    return ".bashrc"
-}
+// func detectShell() string {
+// 	// dummy function to leave option open: detect shell & output different init?
+// 	shell := os.Getenv("SHELL")
+// 	if strings.Contains(shell, "zsh") {
+// 		return ".zshrc"
+// 	}
+// 	return ".bashrc"
+// }
 
 var goCmd = &cobra.Command{
 	Use:   "go <name>",
@@ -70,12 +81,23 @@ var goCmd = &cobra.Command{
 }
 
 var addCmd = &cobra.Command{
-	Use:   "add <path> <name>",
+	Use:   "add <name> [path]",
 	Short: "Add a new shortcut",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		path := args[0]
-		name := args[1]
+		var path, name string
+		if len(args) == 1 {
+			name = args[0]
+			cwd, err := os.Getwd()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: could not get current directory. Please provide path: fs add <name> <path>\n")
+				os.Exit(1)
+			}
+			path = cwd
+		} else {
+			path = args[0]
+			name = args[1]
+		}
 
 		// Expand path (handle ~ and relative paths)
 		absPath, err := expandPath(path)
@@ -171,7 +193,7 @@ var editPathCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Updated shortcut '%s' to point to: %s\n", name, absPath)
-		
+
 		// Show current
 		tags, err := store.GetShortcutTags(name)
 		if err == nil && len(tags) > 0 {
@@ -203,7 +225,7 @@ var editNameCmd = &cobra.Command{
 
 		fmt.Printf("Renamed shortcut '%s' to '%s'\n", oldName, newName)
 		fmt.Printf("  Path: %s\n", sc.Path)
-		
+
 		// Show current tags
 		tags, err := store.GetShortcutTags(newName)
 		if err == nil && len(tags) > 0 {
@@ -227,10 +249,10 @@ func expandPath(path string) (string, error) {
 }
 
 var peekCmd = &cobra.Command{
-	Use:   "peek <name>",
+	Use:     "peek <name>",
 	Aliases: []string{"ls"},
-	Short: "Preview the contents of a shortcut location",
-	Args:  cobra.ExactArgs(1),
+	Short:   "Preview the contents of a shortcut location",
+	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 
@@ -289,8 +311,8 @@ var untagCmd = &cobra.Command{
 }
 
 var findCmd = &cobra.Command{
-	Use:     "find [query]",
-	Short:   "Interactively search and select shortcuts",
+	Use:   "find [query]",
+	Short: "Interactively search and select shortcuts",
 	Run: func(cmd *cobra.Command, args []string) {
 		query := ""
 		if len(args) > 0 {
