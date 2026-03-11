@@ -95,8 +95,8 @@ var addCmd = &cobra.Command{
 			}
 			path = cwd
 		} else {
-			path = args[0]
-			name = args[1]
+			name = args[0]
+			path = args[1]
 		}
 
 		// Expand path (handle ~ and relative paths)
@@ -133,7 +133,7 @@ var listCmd = &cobra.Command{
 		}
 
 		if len(shortcuts) == 0 {
-			fmt.Println("No shortcuts found. Add one with: fs add <path> <name>")
+			fmt.Println("No shortcuts found. Add one with: fs add <name> <path>")
 			return
 		}
 

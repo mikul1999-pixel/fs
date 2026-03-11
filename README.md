@@ -68,34 +68,34 @@ eval "$(fs init go search)"    # creates go() and search()
 
 ```bash
 # Add a shortcut (path defaults to cwd)
-fs add <shortcut> <path>
+fs add <name> <path>
 
 # List all shortcuts
 fs list
 
 # Edit a shortcut
-fs edit-path <shortcut> <new-path>
-fs edit-name <shortcut> <new-name>
+fs edit-path <name> <new-path>
+fs edit-name <name> <new-name>
 
 # Remove a shortcut
-fs rm <shortcut>
+fs rm <name>
 
 # Preview directory contents
-fs peek <shortcut>
+fs peek <name>
 
 # Add tags to a shortcut
-fs tag <shortcut> <tag1> <tag2> ...
+fs tag <name> <tag1> <tag2> ...
 
 # Delete a tag
-fs untag <shortcut>
-fs untag <shortcut> <tag1> <tag2> ...
+fs untag <name>
+fs untag <name> <tag1> <tag2> ...
 
 # Jump to a shortcut
-f <shortcut>
+f <name>
 
 # Search and jump
-ff <like:shortcut-or-path>
-ff <like:shortcut-or-path> --tag <tag1> <tag2> ...
+ff <like:name-or-path>
+ff <like:name-or-path> --tag <tag1> <tag2> ...
 ff --tag <tag1> <tag2> ...
 
 
