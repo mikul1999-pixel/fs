@@ -235,8 +235,12 @@ var editNameCmd = &cobra.Command{
 }
 
 func expandPath(path string) (string, error) {
+	if strings.TrimSpace(path) == "" {
+		return "", fmt.Errorf("path cannot be empty")
+	}
+
 	// Handle ~ for home directory
-	if path[:1] == "~" {
+	if strings.HasPrefix(path, "~") {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
@@ -313,6 +317,7 @@ var untagCmd = &cobra.Command{
 var findCmd = &cobra.Command{
 	Use:   "find [query]",
 	Short: "Interactively search and select shortcuts",
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		query := ""
 		if len(args) > 0 {
