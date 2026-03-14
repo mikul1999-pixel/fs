@@ -109,14 +109,15 @@ func (s *SQLiteStorage) ListShortcuts() ([]Shortcut, error) {
 		if err := rows.Scan(&sc.ID, &sc.Name, &sc.Path, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan shortcut: %w", err)
 		}
-
-		// Get tags
-		sc.Tags, err = s.GetShortcutTags(sc.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get tags: %w", err)
-		}
-
 		shortcuts = append(shortcuts, sc)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate shortcuts: %w", err)
+	}
+
+	if err := s.attachTagsToShortcuts(shortcuts); err != nil {
+		return nil, err
 	}
 
 	return shortcuts, nil
@@ -300,6 +301,53 @@ func (s *SQLiteStorage) GetShortcutTags(shortcutName string) ([]string, error) {
 	return tags, nil
 }
 
+func (s *SQLiteStorage) attachTagsToShortcuts(shortcuts []Shortcut) error {
+	if len(shortcuts) == 0 {
+		return nil
+	}
+
+	placeholders := make([]string, len(shortcuts))
+	args := make([]interface{}, len(shortcuts))
+	for i, sc := range shortcuts {
+		placeholders[i] = "?"
+		args[i] = sc.ID
+	}
+
+	tagQuery := fmt.Sprintf(`
+		SELECT st.shortcut_id, t.name
+		FROM shortcut_tags st
+		JOIN tags t ON t.id = st.tag_id
+		WHERE st.shortcut_id IN (%s)
+		ORDER BY t.name
+	`, strings.Join(placeholders, ","))
+
+	rows, err := s.db.Query(tagQuery, args...)
+	if err != nil {
+		return fmt.Errorf("failed to fetch tags for shortcuts: %w", err)
+	}
+	defer rows.Close()
+
+	tagsByShortcutID := make(map[int][]string, len(shortcuts))
+	for rows.Next() {
+		var shortcutID int
+		var tag string
+		if err := rows.Scan(&shortcutID, &tag); err != nil {
+			return fmt.Errorf("failed to scan shortcut tag: %w", err)
+		}
+		tagsByShortcutID[shortcutID] = append(tagsByShortcutID[shortcutID], tag)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("failed to iterate shortcut tags: %w", err)
+	}
+
+	for i := range shortcuts {
+		shortcuts[i].Tags = tagsByShortcutID[shortcuts[i].ID]
+	}
+
+	return nil
+}
+
 func (s *SQLiteStorage) SearchShortcuts(query string, tags []string, tagOp string) ([]Shortcut, error) {
 	tagOp = strings.ToLower(strings.TrimSpace(tagOp))
 	switch tagOp {
@@ -375,14 +423,15 @@ func (s *SQLiteStorage) SearchShortcuts(query string, tags []string, tagOp strin
 		if err := rows.Scan(&sc.ID, &sc.Name, &sc.Path, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan shortcut: %w", err)
 		}
-
-		// Get tags for this shortcut
-		sc.Tags, err = s.GetShortcutTags(sc.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get tags for shortcut: %w", err)
-		}
-
 		shortcuts = append(shortcuts, sc)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate search results: %w", err)
+	}
+
+	if err := s.attachTagsToShortcuts(shortcuts); err != nil {
+		return nil, err
 	}
 
 	return shortcuts, nil
