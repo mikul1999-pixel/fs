@@ -300,9 +300,19 @@ func (s *SQLiteStorage) GetShortcutTags(shortcutName string) ([]string, error) {
 	return tags, nil
 }
 
-func (s *SQLiteStorage) SearchShortcuts(query string, tags []string) ([]Shortcut, error) {
+func (s *SQLiteStorage) SearchShortcuts(query string, tags []string, tagOp string) ([]Shortcut, error) {
+	tagOp = strings.ToLower(strings.TrimSpace(tagOp))
+	switch tagOp {
+	case "", "or", "any":
+		tagOp = "or"
+	case "and", "all":
+		tagOp = "and"
+	default:
+		return nil, fmt.Errorf("invalid tag operator '%s': expected 'or' or 'and'", tagOp)
+	}
+
 	sqlQuery := `
-		SELECT DISTINCT s.id, s.name, s.path, s.created_at, s.updated_at
+		SELECT s.id, s.name, s.path, s.created_at, s.updated_at
 		FROM shortcuts s
 	`
 
@@ -311,18 +321,31 @@ func (s *SQLiteStorage) SearchShortcuts(query string, tags []string) ([]Shortcut
 
 	// Add tag filtering
 	if len(tags) > 0 {
-		sqlQuery += `
-			JOIN shortcut_tags st ON s.id = st.shortcut_id
-			JOIN tags t ON t.id = st.tag_id
-		`
-
-		// Create placeholders for tags
-		placeholders := make([]string, len(tags))
-		for i, tag := range tags {
-			placeholders[i] = "?"
-			args = append(args, tag)
+		if tagOp == "and" {
+			for range tags {
+				conditions = append(conditions, `EXISTS (
+					SELECT 1
+					FROM shortcut_tags st
+					JOIN tags t ON t.id = st.tag_id
+					WHERE st.shortcut_id = s.id AND t.name = ?
+				)`)
+			}
+			for _, tag := range tags {
+				args = append(args, tag)
+			}
+		} else {
+			placeholders := make([]string, len(tags))
+			for i, tag := range tags {
+				placeholders[i] = "?"
+				args = append(args, tag)
+			}
+			conditions = append(conditions, fmt.Sprintf(`EXISTS (
+				SELECT 1
+				FROM shortcut_tags st
+				JOIN tags t ON t.id = st.tag_id
+				WHERE st.shortcut_id = s.id AND t.name IN (%s)
+			)`, strings.Join(placeholders, ",")))
 		}
-		conditions = append(conditions, fmt.Sprintf("t.name IN (%s)", strings.Join(placeholders, ",")))
 	}
 
 	// Add text search

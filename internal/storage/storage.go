@@ -14,7 +14,7 @@ type Storage interface {
 	RemoveTags(shortcutName string, tags []string) error
 	RemoveAllTags(shortcutName string) error
 	GetShortcutTags(shortcutName string) ([]string, error)
-	SearchShortcuts(query string, tags []string) ([]Shortcut, error)
+	SearchShortcuts(query string, tags []string, tagOp string) ([]Shortcut, error)
 
 	// Close the database
 	Close() error

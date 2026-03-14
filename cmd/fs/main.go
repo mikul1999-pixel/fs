@@ -335,8 +335,9 @@ var findCmd = &cobra.Command{
 		}
 
 		tags, _ := cmd.Flags().GetStringSlice("tag")
+		tagOp, _ := cmd.Flags().GetString("tag-op")
 
-		shortcuts, err := store.SearchShortcuts(query, tags)
+		shortcuts, err := store.SearchShortcuts(query, tags, tagOp)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
@@ -367,6 +368,7 @@ var findCmd = &cobra.Command{
 
 func init() {
 	findCmd.Flags().StringSliceP("tag", "t", []string{}, "Filter by tags") // Add flags to search before adding it to root
+	findCmd.Flags().StringP("tag-op", "o", "or", "Tag filter operator: or|and")
 
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(listCmd)

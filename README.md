@@ -96,8 +96,8 @@ f <name>
 
 # Search and jump
 ff <like:name-or-path>
-ff <like:name-or-path> --tag <tag1> <tag2> ...
-ff --tag <tag1> <tag2> ...
+ff <like:name-or-path> -t <tag1> -t <tag2> ....
+ff --tag <tag1> --tag <tag2> -o and
 
 
 # Example workflow
