@@ -298,13 +298,23 @@ var tagCmd = &cobra.Command{
 }
 
 var untagCmd = &cobra.Command{
-	Use:   "untag <shortcut> <tags...>",
+	Use:   "untag <shortcut> [tags...]",
 	Short: "Remove tags from a shortcut",
-	Args:  cobra.MinimumNArgs(2),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		shortcutName := args[0]
-		tags := args[1:]
 
+		if len(args) == 1 {
+			if err := store.RemoveAllTags(shortcutName); err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				os.Exit(1)
+			}
+
+			fmt.Printf("Removed all tags from %s\n", shortcutName)
+			return
+		}
+
+		tags := args[1:]
 		if err := store.RemoveTags(shortcutName, tags); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)

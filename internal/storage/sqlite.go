@@ -109,13 +109,13 @@ func (s *SQLiteStorage) ListShortcuts() ([]Shortcut, error) {
 		if err := rows.Scan(&sc.ID, &sc.Name, &sc.Path, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan shortcut: %w", err)
 		}
-		
+
 		// Get tags
 		sc.Tags, err = s.GetShortcutTags(sc.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tags: %w", err)
 		}
-		
+
 		shortcuts = append(shortcuts, sc)
 	}
 
@@ -255,6 +255,25 @@ func (s *SQLiteStorage) RemoveTags(shortcutName string, tags []string) error {
 	return nil
 }
 
+func (s *SQLiteStorage) RemoveAllTags(shortcutName string) error {
+	// Get shortcut ID
+	var shortcutID int
+	err := s.db.QueryRow("SELECT id FROM shortcuts WHERE name = ?", shortcutName).Scan(&shortcutID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("shortcut '%s' not found", shortcutName)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to find shortcut: %w", err)
+	}
+
+	_, err = s.db.Exec("DELETE FROM shortcut_tags WHERE shortcut_id = ?", shortcutID)
+	if err != nil {
+		return fmt.Errorf("failed to remove all tags: %w", err)
+	}
+
+	return nil
+}
+
 func (s *SQLiteStorage) GetShortcutTags(shortcutName string) ([]string, error) {
 	rows, err := s.db.Query(`
 		SELECT t.name 
@@ -296,7 +315,7 @@ func (s *SQLiteStorage) SearchShortcuts(query string, tags []string) ([]Shortcut
 			JOIN shortcut_tags st ON s.id = st.shortcut_id
 			JOIN tags t ON t.id = st.tag_id
 		`
-		
+
 		// Create placeholders for tags
 		placeholders := make([]string, len(tags))
 		for i, tag := range tags {
@@ -333,13 +352,13 @@ func (s *SQLiteStorage) SearchShortcuts(query string, tags []string) ([]Shortcut
 		if err := rows.Scan(&sc.ID, &sc.Name, &sc.Path, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan shortcut: %w", err)
 		}
-		
+
 		// Get tags for this shortcut
 		sc.Tags, err = s.GetShortcutTags(sc.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tags for shortcut: %w", err)
 		}
-		
+
 		shortcuts = append(shortcuts, sc)
 	}
 

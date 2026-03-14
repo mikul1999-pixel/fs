@@ -1,6 +1,6 @@
 # fs - Filesystem Toolkit
 
-A lightweight CLI tool for managing filesystem shortcuts, tags, and quick navigation.
+A lightweight CLI tool for managing path shortcuts, tags, and quick navigation.
 
 **Note:** This is a personal project built to learn Go and scratch a personal itch. Inspired by tools like `zoxide` and `autojump`
 
@@ -68,6 +68,7 @@ eval "$(fs init go search)"    # creates go() and search()
 
 ```bash
 # Add a shortcut (path defaults to cwd)
+fs add <name>
 fs add <name> <path>
 
 # List all shortcuts
@@ -86,7 +87,7 @@ fs peek <name>
 # Add tags to a shortcut
 fs tag <name> <tag1> <tag2> ...
 
-# Delete a tag
+# Remove tags from a shortcut (no tag defaults to remove all)
 fs untag <name>
 fs untag <name> <tag1> <tag2> ...
 
@@ -146,4 +147,3 @@ rm -rf ~/.config/fs/
 <br>
 
 ---
-
