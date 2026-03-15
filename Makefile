@@ -1,4 +1,4 @@
-.PHONY: build install uninstall clean test run help
+.PHONY: build install uninstall clean test test-race test-fast run help
 
 BINARY_NAME=fs
 INSTALL_PATH=$(HOME)/.local/bin
@@ -46,8 +46,14 @@ clean: ## Remove built binary
 	@rm -f $(BINARY_NAME)
 	@echo "Cleaned build artifacts"
 
-test: ## Run tests
+test: ## Run all tests (including ./tests)
 	$(GO) test -v ./...
+
+test-fast: ## Run tests without verbose output
+	$(GO) test ./...
+
+test-race: ## Run tests with race detector
+	$(GO) test -race ./...
 
 run: ## Run without installing
 	$(GO) run cmd/fs/main.go
