@@ -336,6 +336,7 @@ var findCmd = &cobra.Command{
 
 		tags, _ := cmd.Flags().GetStringSlice("tag")
 		tagOp, _ := cmd.Flags().GetString("tag-op")
+		plain, _ := cmd.Flags().GetBool("plain")
 
 		shortcuts, err := store.SearchShortcuts(query, tags, tagOp)
 		if err != nil {
@@ -355,7 +356,11 @@ var findCmd = &cobra.Command{
 		}
 
 		// Run interactive selector
-		selectedPath, err := ui.RunSelector(shortcuts)
+		selectedPath, err := ui.RunSelector(shortcuts, ui.SelectorOptions{
+			Query:      query,
+			FilterTags: tags,
+			NoColor:    plain,
+		})
 		if err != nil {
 			os.Exit(1)
 		}
@@ -369,6 +374,7 @@ var findCmd = &cobra.Command{
 func init() {
 	findCmd.Flags().StringSliceP("tag", "t", []string{}, "Filter by tags") // Add flags to search before adding it to root
 	findCmd.Flags().StringP("tag-op", "o", "or", "Tag filter operator: or|and")
+	findCmd.Flags().BoolP("plain", "p", false, "Disable selector colors")
 
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(listCmd)

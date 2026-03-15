@@ -16,7 +16,7 @@ func testShortcuts() []storage.Shortcut {
 }
 
 func TestModelUpdate_NavigationAndSelection(t *testing.T) {
-	m := InitialModel(testShortcuts())
+	m := InitialModel(testShortcuts(), SelectorOptions{NoColor: true})
 
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyDown})
 	m1 := updated.(model)
@@ -35,7 +35,7 @@ func TestModelUpdate_NavigationAndSelection(t *testing.T) {
 }
 
 func TestModelUpdate_Quit(t *testing.T) {
-	m := InitialModel(testShortcuts())
+	m := InitialModel(testShortcuts(), SelectorOptions{NoColor: true})
 
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 	m1 := updated.(model)
@@ -46,7 +46,7 @@ func TestModelUpdate_Quit(t *testing.T) {
 }
 
 func TestModelView_ShowsShortcutAndTags(t *testing.T) {
-	m := InitialModel(testShortcuts())
+	m := InitialModel(testShortcuts(), SelectorOptions{NoColor: true})
 	view := m.View()
 
 	if !strings.Contains(view, "api -> /tmp/api") {
@@ -54,5 +54,33 @@ func TestModelView_ShowsShortcutAndTags(t *testing.T) {
 	}
 	if !strings.Contains(view, "[go, proj]") {
 		t.Fatalf("expected view to contain tags, got %q", view)
+	}
+}
+
+func TestModelView_HighlightsQueryAndMatchedTagWithColor(t *testing.T) {
+	m := InitialModel(testShortcuts(), SelectorOptions{
+		Query:      "ap",
+		FilterTags: []string{"go"},
+	})
+
+	view := m.View()
+
+	if !strings.Contains(view, "api") {
+		t.Fatalf("expected view to contain shortcut name, got %q", view)
+	}
+	if !strings.Contains(view, "go") || !strings.Contains(view, "proj") {
+		t.Fatalf("expected view to contain rendered tags, got %q", view)
+	}
+}
+
+func TestQueryTokens_DedupesAndSortsByLength(t *testing.T) {
+	tokens := queryTokens("api proj api p")
+
+	if len(tokens) != 3 {
+		t.Fatalf("expected 3 unique tokens, got %d (%v)", len(tokens), tokens)
+	}
+
+	if tokens[0] != "proj" {
+		t.Fatalf("expected longest token first, got %v", tokens)
 	}
 }
