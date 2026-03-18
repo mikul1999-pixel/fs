@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -52,5 +53,40 @@ func TestExpandPath_RelativeToAbsolute(t *testing.T) {
 	want := filepath.Join(tmp, "repo")
 	if got != want {
 		t.Fatalf("unexpected absolute path. got=%q want=%q", got, want)
+	}
+}
+
+func TestRenderInitScript_IncludesErrorHandlingForJumpAndFind(t *testing.T) {
+	script := renderInitScript("f", "ff")
+
+	required := []string{
+		"if [ $# -ne 1 ]; then",
+		"path=\"$(fs go \"$1\")\" || return $?",
+		"if [ ! -d \"$path\" ]; then",
+		"path=$(fs find \"$@\" </dev/tty)",
+		"local status=$?",
+		"if [ $status -ne 0 ]; then",
+	}
+
+	for _, needle := range required {
+		if !strings.Contains(script, needle) {
+			t.Fatalf("expected init script to contain %q", needle)
+		}
+	}
+}
+
+func TestRenderInitScript_UsesCustomFunctionNames(t *testing.T) {
+	script := renderInitScript("go", "search")
+
+	if !strings.Contains(script, "go() {") {
+		t.Fatal("expected script to define custom jump function")
+	}
+
+	if !strings.Contains(script, "Usage: go <shortcut>") {
+		t.Fatal("expected script to include custom jump usage")
+	}
+
+	if !strings.Contains(script, "search() {") {
+		t.Fatal("expected script to define custom find function")
 	}
 }

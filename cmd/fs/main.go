@@ -36,20 +36,56 @@ var initCmd = &cobra.Command{
 			findFn = args[1]
 		}
 
-		fmt.Printf(`
+		fmt.Print(renderInitScript(jumpFn, findFn))
+	},
+}
+
+func renderInitScript(jumpFn, findFn string) string {
+	return fmt.Sprintf(`
 # fs shell integration
 
 %s() {
-    cd "$(fs go "$1")"
+    if [ $# -ne 1 ]; then
+        echo "Usage: %s <shortcut>" >&2
+        return 2
+    fi
+
+    local path
+    path="$(fs go "$1")" || return $?
+
+    if [ -z "$path" ]; then
+        return 1
+    fi
+
+    if [ ! -d "$path" ]; then
+        echo "fs: shortcut '$1' points to missing directory: $path" >&2
+        return 1
+    fi
+
+    cd "$path"
 }
 
 %s() {
     local path
     path=$(fs find "$@" </dev/tty)
-    [ $? -eq 0 ] && [ -n "$path" ] && cd "$path"
+    local status=$?
+
+    if [ $status -ne 0 ]; then
+        return $status
+    fi
+
+    if [ -z "$path" ]; then
+        return 1
+    fi
+
+    if [ ! -d "$path" ]; then
+        echo "fs: selected path is not a directory: $path" >&2
+        return 1
+    fi
+
+    cd "$path"
 }
-`, jumpFn, findFn)
-	},
+`, jumpFn, jumpFn, findFn)
 }
 
 // func detectShell() string {
@@ -345,7 +381,7 @@ var findCmd = &cobra.Command{
 		}
 
 		if len(shortcuts) == 0 {
-			fmt.Println("No shortcuts found.")
+			fmt.Fprintln(os.Stderr, "No shortcuts found")
 			os.Exit(1)
 		}
 

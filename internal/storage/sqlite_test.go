@@ -177,3 +177,40 @@ func TestListShortcuts_LoadsTags(t *testing.T) {
 		t.Fatalf("expected 2 tags, got %d (%v)", len(shortcuts[0].Tags), shortcuts[0].Tags)
 	}
 }
+
+func TestNewSQLiteStorage_EnablesForeignKeys(t *testing.T) {
+	s := newTestSQLiteStorage(t)
+
+	var enabled int
+	if err := s.db.QueryRow("PRAGMA foreign_keys").Scan(&enabled); err != nil {
+		t.Fatalf("failed to query foreign_keys pragma: %v", err)
+	}
+
+	if enabled != 1 {
+		t.Fatalf("expected foreign_keys pragma to be 1, got %d", enabled)
+	}
+}
+
+func TestDeleteShortcut_CascadesShortcutTags(t *testing.T) {
+	s := newTestSQLiteStorage(t)
+
+	if err := s.AddShortcut("cli", "/tmp/cli"); err != nil {
+		t.Fatalf("failed to add shortcut: %v", err)
+	}
+	if err := s.AddTags("cli", []string{"go", "proj"}); err != nil {
+		t.Fatalf("failed to add tags: %v", err)
+	}
+
+	if err := s.DeleteShortcut("cli"); err != nil {
+		t.Fatalf("DeleteShortcut returned error: %v", err)
+	}
+
+	var links int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM shortcut_tags").Scan(&links); err != nil {
+		t.Fatalf("failed to count shortcut tag links: %v", err)
+	}
+
+	if links != 0 {
+		t.Fatalf("expected 0 rows in shortcut_tags after deleting shortcut, got %d", links)
+	}
+}
